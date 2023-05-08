@@ -3,7 +3,6 @@ const cors = require('cors');
 const path = require('path');
 const { dbConnectionCheck } = require('../database/config');
 // require('dotenv').config();
-
 class Server {
     constructor() {
         this.app = express();

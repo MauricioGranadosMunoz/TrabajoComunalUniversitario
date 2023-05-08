@@ -1,6 +1,6 @@
 const { dbConnection } = require('../database/config');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const { generateToken, verifyToken } = require('../middleware/auth');
 
 const obtenerUsuarios = async (req, res = response) => {
     try {
@@ -72,12 +72,14 @@ const loginUsuario = async (req, res = response) => {
                     });
                 }
                 if (bResult) {
-                    const token = jwt.sign({id:result[0].id},'the-super-strong-secrect',{ expiresIn: '1h' });
+                    const token = generateToken(result[0].id);
                     dbConnection.query(`UPDATE usuarios SET last_login = now() WHERE id = '${result[0].id}'`);
                     return res.status(200).send({
                         msg: 'Logged in!',
-                        token,
-                        user: result[0]
+                        user: {
+                            ...result[0],
+                            token
+                        }
                     });
                 }
                 return res.status(401).send({
@@ -91,8 +93,16 @@ const loginUsuario = async (req, res = response) => {
     }
 }
 
+const obtenerUsuarioUnico = async (req, res = response) => {
+    const { tokenValid, userTokenId } = verifyToken(req, res)
+    if (tokenValid) {
+        res.json(userTokenId)
+    }
+}
+
 module.exports = {
     obtenerUsuarios,
     registrarUsuario,
-    loginUsuario
+    loginUsuario,
+    obtenerUsuarioUnico
 }
